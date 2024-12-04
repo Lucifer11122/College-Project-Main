@@ -33,7 +33,7 @@ const Header = () => {
             Faculties
           </li>
           <li className="cursor-pointer hover:text-sky-500 transition-colors">
-            Alumni
+            <Link to="/Alumni">Alumni</Link>
           </li>
         </ul>
 

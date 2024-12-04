@@ -7,6 +7,7 @@ import StudentsQueries from './Portalcompo/StudentsQueries';
 const StudentDashboard = () => {
   const [studentData, setStudentData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [enrolledClasses, setEnrolledClasses] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,26 +17,39 @@ const StudentDashboard = () => {
       return;
     }
 
-    const fetchStudentData = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/student/dashboard', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setStudentData(response.data);
+        // Fetch both student data and classes
+        const [dashboardRes, classesRes] = await Promise.all([
+          axios.get('http://localhost:5000/api/student/dashboard', {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get('http://localhost:5000/api/student/classes', {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        ]);
+
+        setStudentData(dashboardRes.data);
+        setEnrolledClasses(classesRes.data);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching student data:', error);
         if (error.response?.status === 401) {
           navigate('/user-profile');
         }
+        setLoading(false);
       }
     };
 
-    fetchStudentData();
+    fetchData();
   }, [navigate]);
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+      </div>
+    );
   }
 
   return (
@@ -67,14 +81,16 @@ const StudentDashboard = () => {
             </div>
           </div>
 
-          {/* Courses Card */}
+          {/* Classes Card */}
           <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4">My Courses</h2>
+            <h2 className="text-xl font-semibold mb-4">My Classes</h2>
             <div className="space-y-2">
-              {studentData?.courses?.map((course, index) => (
-                <div key={index} className="p-2 bg-gray-50 rounded">
-                  <p className="font-medium">{course.name}</p>
-                  <p className="text-sm text-gray-600">{course.instructor}</p>
+              {enrolledClasses.map((cls) => (
+                <div key={cls._id} className="p-4 border rounded">
+                  <h4 className="font-medium">{cls.name}</h4>
+                  <p className="text-sm text-gray-600">
+                    Teacher: {cls.teacher.firstName} {cls.teacher.lastName}
+                  </p>
                 </div>
               ))}
             </div>

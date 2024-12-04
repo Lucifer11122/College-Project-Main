@@ -4,6 +4,7 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";
+import { protect } from './middleware/authMiddleware.js';
 import dotenv from "dotenv";
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import Query from './models/Query.js';
@@ -176,6 +177,28 @@ app.post("/api/admin/classes", async (req, res) => {
     res.status(201).json({ message: "Class created successfully" });
   } catch (error) {
     res.status(500).json({ message: "Error creating class" });
+  }
+});
+
+// Add a route to get classes assigned to a teacher
+app.get("/api/teacher/classes", protect, async (req, res) => {
+  try {
+    const classes = await Class.find({ teacher: req.user._id })
+      .populate('students', 'firstName lastName');
+    res.json(classes);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching classes for teacher" });
+  }
+});
+
+// Add a route to get classes a student is enrolled in
+app.get("/api/student/classes", protect, async (req, res) => {
+  try {
+    const classes = await Class.find({ students: req.user._id })
+      .populate('teacher', 'firstName lastName');
+    res.json(classes);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching classes for student" });
   }
 });
 
