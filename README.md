@@ -98,7 +98,7 @@ college-management-webapp/
 
 ## Contributors
 
-- **Anuj Arsh**
+- **Anuj**
 - **Arsh**
 - **Qasim**
 
