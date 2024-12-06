@@ -11,6 +11,7 @@ import Query from './models/Query.js';
 import User from './models/User.js';
 import Class from './models/Class.js';
 import Notice from './models/Notice.js';
+import Course from './models/Course.js';
 
 dotenv.config();
 const app = express();
@@ -206,11 +207,33 @@ app.get("/api/student/classes", protect, async (req, res) => {
 app.post("/api/admin/notices", async (req, res) => {
   try {
     const { title, message, targetRole } = req.body;
-    const newNotice = new Notice({ title, message, targetRole });
+    
+    // Validate required fields
+    if (!title || !message || !targetRole) {
+      return res.status(400).json({ 
+        message: "Title, message and target role are required" 
+      });
+    }
+
+    const newNotice = new Notice({ 
+      title, 
+      message, 
+      targetRole 
+    });
+
     await newNotice.save();
-    res.status(201).json({ message: "Notice sent successfully" });
+    console.log('Notice saved:', newNotice); // Debug log
+
+    res.status(201).json({ 
+      message: "Notice sent successfully",
+      notice: newNotice 
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error sending notice" });
+    console.error('Error creating notice:', error);
+    res.status(500).json({ 
+      message: "Error sending notice",
+      error: error.message 
+    });
   }
 });
 
@@ -223,6 +246,70 @@ app.get("/api/notices/:role", async (req, res) => {
     res.json(notices);
   } catch (error) {
     res.status(500).json({ message: "Error fetching notices" });
+  }
+});
+
+app.get("/api/admin/courses", async (req, res) => {
+  try {
+    const courses = await Course.find();
+    res.json(courses);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching courses" });
+  }
+});
+
+app.post("/api/admin/courses", async (req, res) => {
+  try {
+    const { title, type, description, duration, fees, criteria } = req.body;
+    
+    // Validate required fields
+    if (!title || !type || !duration || !fees || !criteria) {
+      return res.status(400).json({ 
+        message: "All fields except description are required" 
+      });
+    }
+
+    const newCourse = new Course({
+      title,
+      type,
+      description: description || '',
+      duration,
+      fees,
+      criteria,
+      image: 'cimage1.jpeg' // Default image
+    });
+
+    await newCourse.save();
+    console.log('Course saved:', newCourse); // Debug log
+
+    res.status(201).json({ 
+      message: "Course created successfully",
+      course: newCourse 
+    });
+  } catch (error) {
+    console.error('Error creating course:', error);
+    res.status(500).json({ 
+      message: "Error creating course",
+      error: error.message 
+    });
+  }
+});
+
+app.delete("/api/admin/courses/:id", async (req, res) => {
+  try {
+    await Course.findByIdAndDelete(req.params.id);
+    res.json({ message: "Course deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting course" });
+  }
+});
+
+app.get("/api/courses/:type", async (req, res) => {
+  try {
+    const courses = await Course.find({ type: req.params.type });
+    res.json(courses);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching courses" });
   }
 });
 

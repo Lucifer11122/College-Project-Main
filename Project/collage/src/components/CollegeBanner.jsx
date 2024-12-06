@@ -20,7 +20,7 @@ const CollegeBanner = () => {
 
       <div className="relative flex flex-col items-center justify-center h-full text-white text-center px-4">
         <h1 className="text-4xl md:text-6xl font-CastoroTitling animate__animated animate__fadeIn animate__delay-1s animate__slideInUp">
-          WELCOME TO BB COLLEGE
+          WELCOME TO BR COLLEGE
         </h1>
         <p className="mt-2 text-lg md:text-2xl text-orange-500 font-JacquesFrancois animate__animated animate__fadeIn animate__delay-2s">
           - Empowering Minds -

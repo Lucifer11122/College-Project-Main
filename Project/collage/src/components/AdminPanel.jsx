@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
+axios.interceptors.request.use(request => {
+  console.log('Starting Request:', request);
+  return request;
+});
+
+axios.interceptors.response.use(response => {
+  console.log('Response:', response);
+  return response;
+}, error => {
+  console.log('Response Error:', error);
+  return Promise.reject(error);
+});
+
 const AdminPanel = () => {
   const [notifications, setNotifications] = useState([]);
   const [newNotification, setNewNotification] = useState("");
@@ -18,6 +31,16 @@ const AdminPanel = () => {
     title: '',
     message: '',
     targetRole: 'all'
+  });
+  const [courses, setCourses] = useState([]);
+  const [newCourse, setNewCourse] = useState({
+    title: '',
+    type: 'undergraduate',
+    description: '',
+    duration: '',
+    fees: '',
+    criteria: '',
+    image: 'cimage1.jpeg'
   });
 
   // Fetch data
@@ -46,8 +69,18 @@ const AdminPanel = () => {
     }
   };
 
+  const fetchCourses = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/admin/courses');
+      setCourses(response.data);
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    }
+  };
+
   useEffect(() => {
     fetchData();
+    fetchCourses();
   }, []);
 
   // Add a new notification
@@ -124,12 +157,56 @@ const AdminPanel = () => {
   const handleNoticeSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:5000/api/admin/notices", notice);
-      setNotice({ title: '', message: '', targetRole: 'all' });
-      alert("Notice sent successfully!");
+      console.log('Submitting notice:', notice); // Debug log
+      const response = await axios.post("http://localhost:5000/api/admin/notices", notice);
+      console.log('Notice response:', response.data); // Debug log
+      
+      if (response.data.notice) {
+        setNotice({ title: '', message: '', targetRole: 'all' });
+        alert("Notice sent successfully!");
+      }
     } catch (error) {
-      console.error("Error sending notice:", error);
-      alert("Failed to send notice");
+      console.error("Error sending notice:", error.response?.data || error);
+      alert(error.response?.data?.message || "Failed to send notice");
+    }
+  };
+
+  const handleCourseSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      console.log('Submitting course:', newCourse); // Debug log
+      const response = await axios.post('http://localhost:5000/api/admin/courses', newCourse);
+      console.log('Course response:', response.data); // Debug log
+      
+      if (response.data.course) {
+        setNewCourse({
+          title: '',
+          type: 'undergraduate',
+          description: '',
+          duration: '',
+          fees: '',
+          criteria: '',
+          image: 'cimage1.jpeg'
+        });
+        fetchCourses();
+        alert('Course added successfully!');
+      }
+    } catch (error) {
+      console.error('Error adding course:', error.response?.data || error);
+      alert(error.response?.data?.message || 'Failed to add course');
+    }
+  };
+
+  const handleDeleteCourse = async (courseId) => {
+    if (window.confirm('Are you sure you want to delete this course?')) {
+      try {
+        await axios.delete(`http://localhost:5000/api/admin/courses/${courseId}`);
+        fetchCourses();
+        alert('Course deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting course:', error);
+        alert('Failed to delete course');
+      }
     }
   };
 
@@ -370,6 +447,116 @@ const AdminPanel = () => {
             Send Notice
           </button>
         </form>
+      </div>
+
+      {/* Course Management Section */}
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-4">Manage Courses</h2>
+        <form onSubmit={handleCourseSubmit} className="space-y-4">
+          <div>
+            <input
+              type="text"
+              placeholder="Course Title"
+              value={newCourse.title}
+              onChange={(e) => setNewCourse({ ...newCourse, title: e.target.value })}
+              className="w-full p-2 border rounded"
+              required
+            />
+          </div>
+
+          <div>
+            <select
+              value={newCourse.type}
+              onChange={(e) => setNewCourse({ ...newCourse, type: e.target.value })}
+              className="w-full p-2 border rounded"
+              required
+            >
+              <option value="undergraduate">Undergraduate</option>
+              <option value="graduate">Graduate</option>
+            </select>
+          </div>
+
+          <div>
+            <textarea
+              placeholder="Course Description"
+              value={newCourse.description}
+              onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })}
+              className="w-full p-2 border rounded h-32"
+              required
+            />
+          </div>
+
+          <div>
+            <input
+              type="text"
+              placeholder="Duration (e.g., 3 years)"
+              value={newCourse.duration}
+              onChange={(e) => setNewCourse({ ...newCourse, duration: e.target.value })}
+              className="w-full p-2 border rounded"
+              required
+            />
+          </div>
+
+          <div>
+            <input
+              type="text"
+              placeholder="Fees"
+              value={newCourse.fees}
+              onChange={(e) => setNewCourse({ ...newCourse, fees: e.target.value })}
+              className="w-full p-2 border rounded"
+              required
+            />
+          </div>
+
+          <div>
+            <textarea
+              placeholder="Eligibility Criteria"
+              value={newCourse.criteria}
+              onChange={(e) => setNewCourse({ ...newCourse, criteria: e.target.value })}
+              className="w-full p-2 border rounded h-20"
+              required
+            />
+          </div>
+
+          <div>
+            <select
+              value={newCourse.image}
+              onChange={(e) => setNewCourse({ ...newCourse, image: e.target.value })}
+              className="w-full p-2 border rounded"
+            >
+              <option value="cimage1.jpeg">Image 1</option>
+              <option value="cimage2.jpeg">Image 2</option>
+              <option value="cimage3.jpeg">Image 3</option>
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Add Course
+          </button>
+        </form>
+
+        {/* Display Current Courses */}
+        <div className="mt-6 space-y-4">
+          <h3 className="font-semibold">Current Courses</h3>
+          {courses.map((course) => (
+            <div key={course._id} className="p-4 border rounded flex justify-between items-center">
+              <div>
+                <h4 className="font-medium">{course.title}</h4>
+                <p className="text-sm text-gray-600">{course.type}</p>
+                <p className="text-sm text-gray-600">Fees: {course.fees}</p>
+              </div>
+              <button
+                onClick={() => handleDeleteCourse(course._id)}
+                className="text-red-500 hover:text-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

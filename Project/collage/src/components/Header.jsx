@@ -10,13 +10,13 @@ const Header = () => {
       {/* Top bar for logo and desktop menu */}
       <div className="flex justify-between items-center py-6 px-8 md:px-32 bg-gradient-to-r from-white to bg-orange-100 drop-shadow-md">
         {/* Logo */}
-        <a href="#" className="flex items-center">
+        {/* <a href="#" className="flex items-center">
           <img
             src={logo}
             alt="Logo"
             className="w-52 hover:scale-105 transition-transform"
           />
-        </a>
+        </a> */}
 
         {/* Desktop Menu */}
         <ul className="hidden xl:flex items-center gap-10 font-semibold text-gray-700">
