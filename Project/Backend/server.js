@@ -10,6 +10,7 @@ import dashboardRoutes from './routes/dashboardRoutes.js';
 import Query from './models/Query.js';
 import User from './models/User.js';
 import Class from './models/Class.js';
+import Notice from './models/Notice.js';
 
 dotenv.config();
 const app = express();
@@ -199,6 +200,29 @@ app.get("/api/student/classes", protect, async (req, res) => {
     res.json(classes);
   } catch (error) {
     res.status(500).json({ message: "Error fetching classes for student" });
+  }
+});
+
+app.post("/api/admin/notices", async (req, res) => {
+  try {
+    const { title, message, targetRole } = req.body;
+    const newNotice = new Notice({ title, message, targetRole });
+    await newNotice.save();
+    res.status(201).json({ message: "Notice sent successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error sending notice" });
+  }
+});
+
+app.get("/api/notices/:role", async (req, res) => {
+  try {
+    const { role } = req.params;
+    const notices = await Notice.find({
+      $or: [{ targetRole: 'all' }, { targetRole: role }]
+    }).sort({ createdAt: -1 });
+    res.json(notices);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching notices" });
   }
 });
 

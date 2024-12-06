@@ -14,6 +14,11 @@ const AdminPanel = () => {
     teacher: '',
     students: []
   });
+  const [notice, setNotice] = useState({
+    title: '',
+    message: '',
+    targetRole: 'all'
+  });
 
   // Fetch data
   const fetchData = async () => {
@@ -113,6 +118,18 @@ const AdminPanel = () => {
     } catch (error) {
       console.error("Error creating class:", error);
       alert("Failed to create class");
+    }
+  };
+
+  const handleNoticeSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post("http://localhost:5000/api/admin/notices", notice);
+      setNotice({ title: '', message: '', targetRole: 'all' });
+      alert("Notice sent successfully!");
+    } catch (error) {
+      console.error("Error sending notice:", error);
+      alert("Failed to send notice");
     }
   };
 
@@ -307,6 +324,52 @@ const AdminPanel = () => {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Notice Management Section */}
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-4">Send Notice</h2>
+        <form onSubmit={handleNoticeSubmit} className="space-y-4">
+          <div>
+            <input
+              type="text"
+              placeholder="Notice Title"
+              value={notice.title}
+              onChange={(e) => setNotice({ ...notice, title: e.target.value })}
+              className="w-full p-2 border rounded"
+              required
+            />
+          </div>
+          
+          <div>
+            <textarea
+              placeholder="Notice Message"
+              value={notice.message}
+              onChange={(e) => setNotice({ ...notice, message: e.target.value })}
+              className="w-full p-2 border rounded h-32"
+              required
+            />
+          </div>
+          
+          <div>
+            <select
+              value={notice.targetRole}
+              onChange={(e) => setNotice({ ...notice, targetRole: e.target.value })}
+              className="w-full p-2 border rounded"
+            >
+              <option value="all">All Users</option>
+              <option value="teacher">Teachers Only</option>
+              <option value="student">Students Only</option>
+            </select>
+          </div>
+          
+          <button
+            type="submit"
+            className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Send Notice
+          </button>
+        </form>
       </div>
     </div>
   );

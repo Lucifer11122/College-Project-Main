@@ -8,6 +8,7 @@ const StudentDashboard = () => {
   const [studentData, setStudentData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [enrolledClasses, setEnrolledClasses] = useState([]);
+  const [notices, setNotices] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -43,6 +44,19 @@ const StudentDashboard = () => {
 
     fetchData();
   }, [navigate]);
+
+  useEffect(() => {
+    const fetchNotices = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/notices/student');
+        setNotices(response.data);
+      } catch (error) {
+        console.error('Error fetching notices:', error);
+      }
+    };
+
+    fetchNotices();
+  }, []);
 
   if (loading) {
     return (
@@ -96,14 +110,17 @@ const StudentDashboard = () => {
             </div>
           </div>
 
-          {/* Notifications Card */}
+          {/* Notices Card */}
           <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4">Notifications</h2>
-            <div className="space-y-2">
-              {studentData?.notifications?.map((notification, index) => (
-                <div key={index} className="p-2 bg-gray-50 rounded">
-                  <p>{notification.message}</p>
-                  <p className="text-sm text-gray-500">{new Date(notification.date).toLocaleDateString()}</p>
+            <h2 className="text-xl font-semibold mb-4">Important Notices</h2>
+            <div className="space-y-4">
+              {notices.map((notice) => (
+                <div key={notice._id} className="p-4 bg-orange-50 rounded border-l-4 border-orange-500">
+                  <h3 className="font-semibold text-lg">{notice.title}</h3>
+                  <p className="text-gray-600 mt-1">{notice.message}</p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    {new Date(notice.createdAt).toLocaleDateString()}
+                  </p>
                 </div>
               ))}
             </div>

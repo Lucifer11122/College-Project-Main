@@ -19,7 +19,6 @@ const TeacherDashboard = () => {
 
     const fetchData = async () => {
       try {
-        // Fetch both teacher data and classes
         const [dashboardRes, classesRes] = await Promise.all([
           axios.get('http://localhost:5000/api/teacher/dashboard', {
             headers: { Authorization: `Bearer ${token}` }
@@ -96,19 +95,6 @@ const TeacherDashboard = () => {
                       </li>
                     ))}
                   </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Notifications Card */}
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4">Notifications</h2>
-            <div className="space-y-2">
-              {teacherData?.notifications?.map((notification, index) => (
-                <div key={index} className="p-2 bg-gray-50 rounded">
-                  <p>{notification.message}</p>
-                  <p className="text-sm text-gray-500">{new Date(notification.date).toLocaleDateString()}</p>
                 </div>
               ))}
             </div>

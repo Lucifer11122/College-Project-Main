@@ -4,9 +4,11 @@ import axios from 'axios';
 const TeacherQueries = () => {
   const [queries, setQueries] = useState([]);
   const [answers, setAnswers] = useState({});
+  const [notices, setNotices] = useState([]);
 
   useEffect(() => {
     fetchQueries();
+    fetchNotices();
     const interval = setInterval(fetchQueries, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -17,6 +19,15 @@ const TeacherQueries = () => {
       setQueries(response.data);
     } catch (error) {
       console.error('Error fetching queries:', error);
+    }
+  };
+
+  const fetchNotices = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/notices/teacher');
+      setNotices(response.data);
+    } catch (error) {
+      console.error('Error fetching notices:', error);
     }
   };
 
@@ -34,6 +45,20 @@ const TeacherQueries = () => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow">
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-4">Important Notices</h2>
+        <div className="space-y-4">
+          {notices.map((notice) => (
+            <div key={notice._id} className="p-4 bg-orange-50 rounded border-l-4 border-orange-500">
+              <h3 className="font-semibold text-lg">{notice.title}</h3>
+              <p className="text-gray-600 mt-1">{notice.message}</p>
+              <p className="text-sm text-gray-500 mt-2">
+                {new Date(notice.createdAt).toLocaleDateString()}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
       <h2 className="text-xl font-semibold mb-4">Student Questions</h2>
       <div className="space-y-4">
         {queries.length === 0 ? (
