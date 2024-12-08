@@ -21,13 +21,13 @@ const Header = () => {
         {/* Desktop Menu */}
         <ul className="hidden xl:flex items-center gap-10 font-semibold text-gray-700">
           <li className="cursor-pointer hover:text-sky-500 transition-colors">
-            Home
+          <Link to="/AdminPanel">Admin</Link>
           </li>
           <li className="cursor-pointer hover:text-sky-500 transition-colors">
             About
           </li>
           <li className="cursor-pointer hover:text-sky-500 transition-colors">
-            <Link to="/AdminPanel">Administration</Link>
+            <Link to="/Administration">Administration</Link>
           </li>
           <li className="cursor-pointer hover:text-sky-500 transition-colors">
             Faculties
@@ -60,7 +60,7 @@ const Header = () => {
           href="#"
           className="block w-full text-center py-2 hover:bg-sky-100 text-gray-700 hover:text-sky-500 transition-colors"
         >
-          Home
+          Admin
         </a>
         <a
           href="#"

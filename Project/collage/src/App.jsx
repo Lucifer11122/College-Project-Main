@@ -45,9 +45,9 @@ import TeacherDashboard from "./components/TeacherDashboard";
 import StudentDashboard from "./components/StudentDashboard";
 import AdmissionFormPage from "./components/AdmissionFormPage";
 import about from "./components/about";
-import administration from "./components/administration";
+import Administration from './components/administration';
 import faculties from "./components/faculties";
-import alumni from "./components/alumni";
+import Alumni from "./components/Alumni";
 import home from "./components/home";
 import AdminPanel from './components/AdminPanel';
 
@@ -64,9 +64,9 @@ function App() {
       <Routes>
         <Route path="/" element={<MainPageLayout />} />
 
-        {/* <Route path="/administration" element={<StandalonePage><administration /></StandalonePage>} /> */}
+        <Route path="/Administration" element={<StandalonePage><Administration /></StandalonePage>} />
         {/* <Route path="/faculties" element={<StandalonePage><faculties /></StandalonePage>} /> */}
-        <Route path="/alumni" element={<StandalonePage><alumni /></StandalonePage>} />
+        <Route path="/Alumni" element={<StandalonePage><Alumni /></StandalonePage>} />
         <Route path="/AdminPanel" element={<StandalonePage><AdminPanel /></StandalonePage>} />
         <Route path="/Grieverance" element={<StandalonePage><Grievance /></StandalonePage>} />
         <Route
