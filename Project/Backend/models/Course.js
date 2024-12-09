@@ -3,20 +3,32 @@ import mongoose from 'mongoose';
 const CourseSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: true
+    default: ''
   },
   type: {
     type: String,
     enum: ['undergraduate', 'graduate'],
-    required: true
+    default: 'undergraduate'
   },
-  description: String,
-  duration: String,
-  fees: String,
-  criteria: String,
+  description: {
+    type: String,
+    default: ''
+  },
+  duration: {
+    type: String,
+    default: ''
+  },
+  fees: {
+    type: String,
+    default: ''
+  },
+  criteria: {
+    type: String,
+    default: ''
+  },
   image: {
     type: String,
-    default: 'cimage1.jpeg'  // Default image
+    default: 'cimage1.jpeg'
   }
 }, {
   timestamps: true

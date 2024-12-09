@@ -12,6 +12,7 @@ import User from './models/User.js';
 import Class from './models/Class.js';
 import Notice from './models/Notice.js';
 import Course from './models/Course.js';
+import compression from 'compression';
 
 dotenv.config();
 const app = express();
@@ -29,6 +30,15 @@ connectDB()
 
 app.use(cors());
 app.use(express.json());
+
+// Add compression middleware
+app.use(compression());
+
+// Add cache headers
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'public, max-age=300'); // Cache for 5 minutes
+  next();
+});
 
 // Store notifications in memory (or you can use MongoDB)
 let notifications = [
@@ -173,12 +183,39 @@ app.get("/api/admin/classes", async (req, res) => {
 
 app.post("/api/admin/classes", async (req, res) => {
   try {
-    const { name, teacher, students } = req.body;
-    const newClass = new Class({ name, teacher, students });
+    const { name, teacher, students, description } = req.body;
+    
+    // Validate required fields
+    if (!name || !teacher || !students || !students.length) {
+      return res.status(400).json({ 
+        message: "Class name, teacher, and at least one student are required" 
+      });
+    }
+
+    const newClass = new Class({
+      name,
+      teacher,
+      students,
+      description: description || ''
+    });
+
     await newClass.save();
-    res.status(201).json({ message: "Class created successfully" });
+    
+    // Fetch the populated class data
+    const populatedClass = await Class.findById(newClass._id)
+      .populate('teacher', 'firstName lastName')
+      .populate('students', 'firstName lastName');
+
+    res.status(201).json({ 
+      message: "Class created successfully",
+      class: populatedClass
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error creating class" });
+    console.error('Error creating class:', error);
+    res.status(500).json({ 
+      message: "Error creating class",
+      error: error.message 
+    });
   }
 });
 
@@ -262,30 +299,23 @@ app.post("/api/admin/courses", async (req, res) => {
   try {
     const { title, type, description, duration, fees, criteria } = req.body;
     
-    // Validate required fields
-    if (!title || !type || !duration || !fees || !criteria) {
-      return res.status(400).json({ 
-        message: "All fields except description are required" 
-      });
-    }
+    console.log('Received course data:', { title, type, description, duration, fees, criteria });
 
+    // Create course with all fields optional
     const newCourse = new Course({
-      title,
-      type,
+      title: title || '',
+      type: type || 'undergraduate',
+      duration: duration || '',
+      fees: fees || '',
       description: description || '',
-      duration,
-      fees,
-      criteria,
-      image: 'cimage1.jpeg' // Default image
+      criteria: criteria || '',
+      image: 'cimage1.jpeg'
     });
 
-    await newCourse.save();
-    console.log('Course saved:', newCourse); // Debug log
+    const savedCourse = await newCourse.save();
+    console.log('Course saved successfully:', savedCourse);
 
-    res.status(201).json({ 
-      message: "Course created successfully",
-      course: newCourse 
-    });
+    res.status(201).json(savedCourse);
   } catch (error) {
     console.error('Error creating course:', error);
     res.status(500).json({ 
@@ -310,6 +340,19 @@ app.get("/api/courses/:type", async (req, res) => {
     res.json(courses);
   } catch (error) {
     res.status(500).json({ message: "Error fetching courses" });
+  }
+});
+
+app.delete("/api/admin/classes/:id", async (req, res) => {
+  try {
+    await Class.findByIdAndDelete(req.params.id);
+    res.json({ message: "Class deleted successfully" });
+  } catch (error) {
+    console.error('Error deleting class:', error);
+    res.status(500).json({ 
+      message: "Error deleting class",
+      error: error.message 
+    });
   }
 });
 

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Grievance from './Portalcompo/Grievance';
 import StudentsQueries from './Portalcompo/StudentsQueries';
+import gp from "../assets/gp.jpg";
 
 const StudentDashboard = () => {
   const [studentData, setStudentData] = useState(null);
@@ -67,16 +68,20 @@ const StudentDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <nav className="bg-orange-500 text-white p-4">
+    <div className="min-h-screen bg-cover bg center"
+    style={{
+      backgroundImage:`url(${gp})`
+    }}
+      >
+    <nav className=" text-white drop-shadow-lg p-4">
         <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Student Dashboard</h1>
+          <h1 className="text-5xl font-bold">ClassBoard</h1>
           <button 
             onClick={() => {
               localStorage.removeItem('token');
               navigate('/');
             }}
-            className="bg-white text-orange-500 px-4 py-2 rounded hover:bg-orange-100"
+            className="bg-orange-200 font-semibold text-red-600 px-4 py-2 rounded-full hover:bg-red-900"
           >
             Logout
           </button>
@@ -86,8 +91,8 @@ const StudentDashboard = () => {
       <div className="container mx-auto p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Profile Card */}
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4">Profile</h2>
+          <div className="bg-white bg-opacity-30 backdrop-blur-md border border-white border-opacity-20 p-6 rounded-3xl shadow-md">
+            <h2 className="text-xl font-Roboto text-blue-600 mb-4">PROFILE</h2>
             <div className="space-y-2">
               <p><span className="font-medium">Name:</span> {studentData?.firstName} {studentData?.lastName}</p>
               <p><span className="font-medium">Email:</span> {studentData?.email}</p>
@@ -96,8 +101,8 @@ const StudentDashboard = () => {
           </div>
 
           {/* Classes Card */}
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4">My Classes</h2>
+          <div className="bg-white bg-opacity-30 backdrop-blur-md border border-white border-opacity-20 p-6 rounded-3xl shadow-md">
+            <h2 className="text-2xl text-blue-600 font-semibold mb-4">My Classes</h2>
             <div className="space-y-2">
               {enrolledClasses.map((cls) => (
                 <div key={cls._id} className="p-4 border rounded">
@@ -111,8 +116,8 @@ const StudentDashboard = () => {
           </div>
 
           {/* Notices Card */}
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4">Important Notices</h2>
+          <div className="bg-white bg-opacity-30 backdrop-blur-md border border-white border-opacity-20 p-6 rounded-3xl shadow-md">
+            <h2 className="text-2xl text-blue-600 font-semibold mb-4">Important Notices</h2>
             <div className="space-y-4">
               {notices.map((notice) => (
                 <div key={notice._id} className="p-4 bg-orange-50 rounded border-l-4 border-orange-500">

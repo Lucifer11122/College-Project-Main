@@ -1,9 +1,19 @@
 import React, { useState } from "react";
 import logo from "../assets/logo.png";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleAdminClick = () => {
+    const password = prompt("Please enter the admin password:");
+    if (password === "Admin Panel") {
+      navigate("/AdminPanel");
+    } else {
+      alert("Incorrect password!");
+    }
+  };
 
   return (
     <header className="relative w-full bg-white shadow-md z-50">
@@ -21,7 +31,7 @@ const Header = () => {
         {/* Desktop Menu */}
         <ul className="hidden xl:flex items-center gap-10 font-semibold text-gray-700">
           <li className="cursor-pointer hover:text-sky-500 transition-colors">
-          <Link to="/AdminPanel">Admin</Link>
+            <button onClick={handleAdminClick}>Admin</button>
           </li>
           <li className="cursor-pointer hover:text-sky-500 transition-colors">
             About
@@ -56,12 +66,12 @@ const Header = () => {
             : "opacity-0 pointer-events-none"
         }`}
       >
-        <a
-          href="#"
+        <button
+          onClick={handleAdminClick}
           className="block w-full text-center py-2 hover:bg-sky-100 text-gray-700 hover:text-sky-500 transition-colors"
         >
           Admin
-        </a>
+        </button>
         <a
           href="#"
           className="block w-full text-center py-2 hover:bg-sky-100 text-gray-700 hover:text-sky-500 transition-colors"
