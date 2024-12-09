@@ -13,36 +13,61 @@ const TeacherDashboard = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/user-profile');
+    const tokenExpires = localStorage.getItem('tokenExpires');
+    const currentTime = new Date().getTime();
+
+    if (!token || !tokenExpires || currentTime > parseInt(tokenExpires)) {
+      handleLogout();
       return;
     }
 
     const fetchData = async () => {
       try {
+        setLoading(true);
         const [dashboardRes, classesRes] = await Promise.all([
           axios.get('http://localhost:5000/api/teacher/dashboard', {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
           }),
           axios.get('http://localhost:5000/api/teacher/classes', {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
           })
         ]);
 
         setTeacherData(dashboardRes.data);
         setAssignedClasses(classesRes.data);
-        setLoading(false);
       } catch (error) {
         console.error('Error fetching teacher data:', error);
         if (error.response?.status === 401) {
-          navigate('/user-profile');
+          handleLogout();
         }
+      } finally {
         setLoading(false);
       }
     };
 
     fetchData();
   }, [navigate]);
+
+  const handleLogout = () => {
+    // Clear all storage
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Clear any cached data
+    setTeacherData(null);
+    setAssignedClasses([]);
+    
+    // Force a clean reload
+    window.location.href = '/user-profile';
+  };
 
   if (loading) {
     return (
@@ -89,19 +114,23 @@ const TeacherDashboard = () => {
           <div className="bg-white bg-opacity-30 backdrop-blur-md border border-white border-opacity-20 p-6 rounded-3xl shadow-md">
             <h2 className="text-2xl font-Roboto text-blue-600 mb-4">Classes Assigned</h2>
             <div className="space-y-2">
-              {assignedClasses.map((cls) => (
-                <div key={cls._id} className="p-4 border rounded">
-                  <h4 className="font-medium">{cls.name}</h4>
-                  <p className="text-sm text-gray-600">Students:</p>
-                  <ul className="list-disc pl-5 text-sm">
-                    {cls.students.map((student) => (
-                      <li key={student._id}>
-                        {student.firstName} {student.lastName}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+              {assignedClasses.length > 0 ? (
+                assignedClasses.map((cls) => (
+                  <div key={cls._id} className="p-4 border rounded">
+                    <h4 className="font-medium">{cls.name}</h4>
+                    <p className="text-sm text-gray-600">Students:</p>
+                    <ul className="list-disc pl-5 text-sm">
+                      {cls.students?.map((student) => (
+                        <li key={student._id}>
+                          {student.firstName} {student.lastName}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500">No classes assigned yet.</p>
+              )}
             </div>
           </div>
 

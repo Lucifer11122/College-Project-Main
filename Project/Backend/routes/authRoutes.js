@@ -49,36 +49,59 @@ router.post('/setup-password', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
-    console.log('Login attempt for:', username); // Debug log
+    console.log('Login request received:', { username, hasPassword: !!password });
 
-    const user = await User.findOne({ username });
-    
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    if (!username || !password) {
+      console.log('Missing credentials');
+      return res.status(400).json({ 
+        message: 'Username and password are required' 
+      });
     }
 
-    // Check if user is new (no password set)
+    // Find user
+    const user = await User.findOne({ username });
+    console.log('User lookup result:', { 
+      found: !!user, 
+      username,
+      hasPassword: !!user?.password,
+      role: user?.role 
+    });
+    
+    if (!user) {
+      return res.status(404).json({ 
+        message: 'User not found. Please check your username.' 
+      });
+    }
+
+    // Check if user is new
     if (!user.password) {
+      console.log('First time login detected for:', username);
       return res.status(200).json({ 
         isNewUser: true,
         message: 'First time login detected'
       });
     }
 
-    // Verify password for existing users
+    // Verify password
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log('Password verification:', { username, isMatch });
+    
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ 
+        message: 'Invalid password. Please try again.' 
+      });
     }
 
-    // Generate JWT token
+    // Generate token
     const token = jwt.sign(
       { userId: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: '2h' }
     );
 
-    // Return user data and token
+    console.log('Login successful:', { username, role: user.role });
+
+    // Send success response
     res.json({
       token,
       isNewUser: false,
@@ -93,7 +116,10 @@ router.post('/login', async (req, res) => {
 
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ 
+      message: 'Server error during login. Please try again.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 

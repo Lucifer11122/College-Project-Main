@@ -41,21 +41,46 @@ const UserProfile = () => {
     setError(null);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', loginData);
-      const { isNewUser, role, token } = response.data;
+      // Clear all storage and cached data
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Force clear browser cache for API endpoints
+      await axios.get('http://localhost:5000/api/auth/clear-session', {
+        headers: { 'Cache-Control': 'no-cache' }
+      });
 
-      // Store authentication details
-      localStorage.setItem('token', token);
-      localStorage.setItem('userRole', role);
+      const response = await axios.post(
+        'http://localhost:5000/api/auth/login',
+        {
+          username: loginData.username.trim(),
+          password: loginData.password.trim()
+        },
+        {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        }
+      );
 
-      if (isNewUser) {
-        setIsFirstTimeLogin(true);
-      } else {
-        navigateToDashboard(role);
+      if (response.data.token) {
+        // Store auth data
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('userRole', response.data.role);
+        localStorage.setItem('tokenExpires', new Date().getTime() + (2 * 60 * 60 * 1000));
+        localStorage.setItem('userId', response.data.user._id);
+
+        // Force a clean reload to the appropriate dashboard
+        window.location.href = response.data.role === 'teacher' 
+          ? '/teacher-dashboard' 
+          : '/student-dashboard';
       }
     } catch (error) {
-      setError(error.response?.data?.message || 'Login failed');
       console.error('Login error:', error);
+      setError(error.response?.data?.message || 'Login failed');
+      setLoginData(prev => ({ ...prev, password: '' }));
     }
   };
 
@@ -70,6 +95,16 @@ const UserProfile = () => {
       default:
         navigate('/user-profile');
     }
+  };
+
+  // Add a logout function
+  const handleLogout = () => {
+    // Clear all storage
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Force reload to clear any cached state
+    window.location.href = '/user-profile';
   };
 
   return (
@@ -158,6 +193,11 @@ const UserProfile = () => {
                   required
                 />
               </div>
+              {error && (
+                <div className="mb-4 text-red-500 text-center text-sm">
+                  {error}
+                </div>
+              )}
               <div className="mt-8 flex justify-center text-lg text-black">
                 <button
                   type="submit"

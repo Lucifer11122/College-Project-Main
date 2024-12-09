@@ -14,37 +14,62 @@ const StudentDashboard = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/user-profile');
+    const tokenExpires = localStorage.getItem('tokenExpires');
+    const currentTime = new Date().getTime();
+
+    if (!token || !tokenExpires || currentTime > parseInt(tokenExpires)) {
+      handleLogout();
       return;
     }
 
     const fetchData = async () => {
       try {
-        // Fetch both student data and classes
+        setLoading(true);
         const [dashboardRes, classesRes] = await Promise.all([
           axios.get('http://localhost:5000/api/student/dashboard', {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
           }),
           axios.get('http://localhost:5000/api/student/classes', {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache'
+            }
           })
         ]);
 
         setStudentData(dashboardRes.data);
         setEnrolledClasses(classesRes.data);
-        setLoading(false);
       } catch (error) {
         console.error('Error fetching student data:', error);
         if (error.response?.status === 401) {
-          navigate('/user-profile');
+          handleLogout();
         }
+      } finally {
         setLoading(false);
       }
     };
 
     fetchData();
   }, [navigate]);
+
+  const handleLogout = () => {
+    // Clear all storage
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Clear any cached data
+    setStudentData(null);
+    setEnrolledClasses([]);
+    setNotices([]);
+    
+    // Force a clean reload
+    window.location.href = '/user-profile';
+  };
 
   useEffect(() => {
     const fetchNotices = async () => {
@@ -104,14 +129,18 @@ const StudentDashboard = () => {
           <div className="bg-white bg-opacity-30 backdrop-blur-md border border-white border-opacity-20 p-6 rounded-3xl shadow-md">
             <h2 className="text-2xl text-blue-600 font-semibold mb-4">My Classes</h2>
             <div className="space-y-2">
-              {enrolledClasses.map((cls) => (
-                <div key={cls._id} className="p-4 border rounded">
-                  <h4 className="font-medium">{cls.name}</h4>
-                  <p className="text-sm text-gray-600">
-                    Teacher: {cls.teacher.firstName} {cls.teacher.lastName}
-                  </p>
-                </div>
-              ))}
+              {enrolledClasses.length > 0 ? (
+                enrolledClasses.map((cls) => (
+                  <div key={cls._id} className="p-4 border rounded">
+                    <h4 className="font-medium">{cls.name}</h4>
+                    <p className="text-sm text-gray-600">
+                      Teacher: {cls.teacher?.firstName} {cls.teacher?.lastName}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500">No classes enrolled yet.</p>
+              )}
             </div>
           </div>
 

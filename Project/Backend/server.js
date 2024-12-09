@@ -34,9 +34,17 @@ app.use(express.json());
 // Add compression middleware
 app.use(compression());
 
-// Add cache headers
+// Update the cache middleware
 app.use((req, res, next) => {
-  res.set('Cache-Control', 'public, max-age=300'); // Cache for 5 minutes
+  // No caching for authentication routes
+  if (req.path.includes('/api/auth/') || req.path.includes('/api/admin/')) {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+  } else {
+    // Limited caching for other routes
+    res.set('Cache-Control', 'private, max-age=300'); // 5 minutes
+  }
   next();
 });
 
@@ -172,11 +180,15 @@ app.get("/api/admin/students", async (req, res) => {
 
 app.get("/api/admin/classes", async (req, res) => {
   try {
+    console.log('Fetching all classes...');
     const classes = await Class.find()
       .populate('teacher', 'firstName lastName')
       .populate('students', 'firstName lastName');
+    
+    console.log('Found classes:', classes);
     res.json(classes);
   } catch (error) {
+    console.error("Error fetching classes:", error);
     res.status(500).json({ message: "Error fetching classes" });
   }
 });
@@ -184,13 +196,7 @@ app.get("/api/admin/classes", async (req, res) => {
 app.post("/api/admin/classes", async (req, res) => {
   try {
     const { name, teacher, students, description } = req.body;
-    
-    // Validate required fields
-    if (!name || !teacher || !students || !students.length) {
-      return res.status(400).json({ 
-        message: "Class name, teacher, and at least one student are required" 
-      });
-    }
+    console.log('Creating new class:', { name, teacher, students, description });
 
     const newClass = new Class({
       name,
@@ -206,6 +212,7 @@ app.post("/api/admin/classes", async (req, res) => {
       .populate('teacher', 'firstName lastName')
       .populate('students', 'firstName lastName');
 
+    console.log('Created class:', populatedClass);
     res.status(201).json({ 
       message: "Class created successfully",
       class: populatedClass
@@ -233,11 +240,14 @@ app.get("/api/teacher/classes", protect, async (req, res) => {
 // Add a route to get classes a student is enrolled in
 app.get("/api/student/classes", protect, async (req, res) => {
   try {
+    console.log('Fetching classes for student:', req.user._id);
     const classes = await Class.find({ students: req.user._id })
       .populate('teacher', 'firstName lastName');
+    console.log('Found student classes:', classes);
     res.json(classes);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching classes for student" });
+    console.error('Error fetching student classes:', error);
+    res.status(500).json({ message: "Error fetching student's classes" });
   }
 });
 
@@ -345,8 +355,17 @@ app.get("/api/courses/:type", async (req, res) => {
 
 app.delete("/api/admin/classes/:id", async (req, res) => {
   try {
-    await Class.findByIdAndDelete(req.params.id);
-    res.json({ message: "Class deleted successfully" });
+    const classId = req.params.id;
+    console.log('Attempting to delete class:', classId);
+
+    const deletedClass = await Class.findByIdAndDelete(classId);
+    
+    if (!deletedClass) {
+      return res.status(404).json({ message: "Class not found" });
+    }
+
+    console.log('Class deleted successfully:', deletedClass);
+    res.json({ message: "Class deleted successfully", deletedClass });
   } catch (error) {
     console.error('Error deleting class:', error);
     res.status(500).json({ 
@@ -354,6 +373,16 @@ app.delete("/api/admin/classes/:id", async (req, res) => {
       error: error.message 
     });
   }
+});
+
+app.get("/api/auth/clear-session", (req, res) => {
+  res.set({
+    'Clear-Site-Data': '"cache", "cookies", "storage"',
+    'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  res.status(200).json({ message: 'Session cleared' });
 });
 
 app.listen(port, () => {

@@ -49,6 +49,7 @@ const AdminPanel = () => {
   // Fetch data
   const fetchData = async () => {
     try {
+      console.log('Fetching admin data...');
       const [notificationsRes, grievancesRes, usersRes, teachersRes, studentsRes, classesRes] = await Promise.all([
         axios.get("http://localhost:5000/notifications"),
         fetch("http://localhost:5000/grievances"),
@@ -65,6 +66,7 @@ const AdminPanel = () => {
         setNewUsers(await usersRes.json());
         setTeachers(teachersRes.data);
         setStudents(studentsRes.data);
+        console.log('Classes data:', classesRes.data);
         setClasses(classesRes.data);
       }
     } catch (error) {
@@ -85,6 +87,11 @@ const AdminPanel = () => {
     fetchData();
     fetchCourses();
   }, []);
+
+  // Add this useEffect to log classes whenever they change
+  useEffect(() => {
+    console.log('Current classes:', classes);
+  }, [classes]);
 
   // Add a new notification
   const handleAddNotification = async () => {
@@ -244,12 +251,18 @@ const AdminPanel = () => {
   const handleDeleteClass = async (classId) => {
     if (window.confirm('Are you sure you want to delete this class?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/admin/classes/${classId}`);
-        fetchData();
-        alert('Class deleted successfully!');
+        console.log('Deleting class:', classId);
+        const response = await axios.delete(`http://localhost:5000/api/admin/classes/${classId}`);
+        console.log('Delete response:', response.data);
+        
+        if (response.data.message === "Class deleted successfully") {
+          // Update the classes state by removing the deleted class
+          setClasses(prevClasses => prevClasses.filter(cls => cls._id !== classId));
+          alert('Class deleted successfully!');
+        }
       } catch (error) {
         console.error('Error deleting class:', error);
-        alert('Failed to delete class');
+        alert('Failed to delete class: ' + (error.response?.data?.message || error.message));
       }
     }
   };
