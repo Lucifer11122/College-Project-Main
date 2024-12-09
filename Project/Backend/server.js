@@ -13,6 +13,7 @@ import Class from './models/Class.js';
 import Notice from './models/Notice.js';
 import Course from './models/Course.js';
 import compression from 'compression';
+import Notification from './models/Notification.js';
 
 dotenv.config();
 const app = express();
@@ -58,35 +59,64 @@ let notifications = [
 let grievances = [];  
 
 // Get all notifications
-app.get("/notifications", (req, res) => {
-  res.json(notifications);
+app.get("/notifications", async (req, res) => {
+  try {
+    const notifications = await Notification.find()
+      .sort({ createdAt: -1 });
+    res.json(notifications.map(n => n.message));
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({ message: "Error fetching notifications" });
+  }
 });
 
 // Add a new notification
-app.post("/notifications", (req, res) => {
-  const { notification } = req.body;
-  if (notification && typeof notification === "string" && notification.trim() !== "") {
-    notifications.push(notification.trim());
-    res.status(201).json({ 
-      message: "Notification added successfully!",
-      notifications 
+app.post("/notifications", async (req, res) => {
+  try {
+    const { notification } = req.body;
+    
+    if (!notification || typeof notification !== "string" || !notification.trim()) {
+      return res.status(400).json({ message: "Invalid notification format!" });
+    }
+
+    const newNotification = new Notification({
+      message: notification.trim()
     });
-  } else {
-    res.status(400).json({ message: "Invalid notification format!" });
+
+    await newNotification.save();
+    
+    // Fetch all notifications after adding new one
+    const notifications = await Notification.find()
+      .sort({ createdAt: -1 });
+
+    res.status(201).json(notifications.map(n => n.message));
+  } catch (error) {
+    console.error('Error adding notification:', error);
+    res.status(500).json({ message: "Error adding notification" });
   }
 });
 
 // Delete a notification
-app.delete("/notifications/:index", (req, res) => {
-  const index = parseInt(req.params.index);
-  if (index >= 0 && index < notifications.length) {
-    notifications.splice(index, 1);
-    res.json({ 
-      message: "Notification deleted successfully!",
-      notifications 
-    });
-  } else {
-    res.status(404).json({ message: "Notification not found!" });
+app.delete("/notifications/:index", async (req, res) => {
+  try {
+    const notifications = await Notification.find()
+      .sort({ createdAt: -1 });
+    const index = parseInt(req.params.index);
+
+    if (index >= 0 && index < notifications.length) {
+      await Notification.findByIdAndDelete(notifications[index]._id);
+      
+      // Get updated notifications
+      const updatedNotifications = await Notification.find()
+        .sort({ createdAt: -1 });
+
+      res.json(updatedNotifications.map(n => n.message));
+    } else {
+      res.status(404).json({ message: "Notification not found!" });
+    }
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    res.status(500).json({ message: "Error deleting notification" });
   }
 });
 

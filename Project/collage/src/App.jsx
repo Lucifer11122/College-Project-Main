@@ -44,18 +44,14 @@ import Undergrade from './components/Undergrade';
 import TeacherDashboard from "./components/TeacherDashboard";
 import StudentDashboard from "./components/StudentDashboard";
 import AdmissionFormPage from "./components/AdmissionFormPage";
-import about from "./components/about";
 import Administration from './components/administration';
 import faculties from "./components/faculties";
 import Alumni from "./components/Alumni";
-import home from "./components/home";
 import AdminPanel from './components/AdminPanel';
 
 // Portal components
 import ClassesAssigned from "./components/Portalcompo/ClassesAssigned";
 import Grievance from "./components/Portalcompo/Grievance";
-import Milestones from "./components/Portalcompo/Milestones";
-import Settings from "./components/Portalcompo/Settings";
 import StudentsQueries from "./components/Portalcompo/StudentsQueries";
 
 function App() {

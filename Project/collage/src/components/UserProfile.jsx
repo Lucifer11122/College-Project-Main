@@ -17,22 +17,36 @@ const UserProfile = () => {
     setError(null);
     
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/setup-password', {
-        username: loginData.username,
-        password: loginData.password
-      });
+      console.log('Setting up password for:', loginData.username);
+      
+      const response = await axios.post(
+        'http://localhost:5000/api/auth/setup-password',
+        {
+          username: loginData.username.trim(),
+          password: loginData.password.trim()
+        }
+      );
 
-      // Reset first-time login state and proceed to login
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('userRole', response.data.role);
-      
-      setIsFirstTimeLogin(false);
-      setLoginData({ username: loginData.username, password: '' });
-      
-      // Navigate based on role
-      navigateToDashboard(response.data.role);
+      console.log('Password setup response:', response.data);
+
+      if (response.data.token) {
+        // Store auth data
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('userRole', response.data.role);
+        localStorage.setItem('tokenExpires', new Date().getTime() + (2 * 60 * 60 * 1000));
+
+        // Show success message
+        alert('Password setup successful! Redirecting to dashboard...');
+
+        // Redirect to appropriate dashboard
+        window.location.href = response.data.role === 'teacher' 
+          ? '/teacher-dashboard' 
+          : '/student-dashboard';
+      }
     } catch (error) {
-      setError(error.response?.data?.message || 'Password setup failed');
+      console.error('Password setup error:', error.response?.data || error);
+      setError(error.response?.data?.message || 'Failed to set up password. Please try again.');
+      setLoginData(prev => ({ ...prev, password: '' }));
     }
   };
 
@@ -41,44 +55,42 @@ const UserProfile = () => {
     setError(null);
 
     try {
-      // Clear all storage and cached data
+      // Clear all storage
       localStorage.clear();
       sessionStorage.clear();
-      
-      // Force clear browser cache for API endpoints
-      await axios.get('http://localhost:5000/api/auth/clear-session', {
-        headers: { 'Cache-Control': 'no-cache' }
-      });
 
+      console.log('Attempting login with:', loginData.username);
+      
       const response = await axios.post(
         'http://localhost:5000/api/auth/login',
         {
           username: loginData.username.trim(),
           password: loginData.password.trim()
-        },
-        {
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
         }
       );
 
+      console.log('Login response:', response.data);
+
+      // Handle first-time login
+      if (response.data.isNewUser) {
+        console.log('First time login detected, switching to password setup');
+        setIsFirstTimeLogin(true);
+        return;
+      }
+
+      // Handle successful login
       if (response.data.token) {
-        // Store auth data
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('userRole', response.data.role);
         localStorage.setItem('tokenExpires', new Date().getTime() + (2 * 60 * 60 * 1000));
-        localStorage.setItem('userId', response.data.user._id);
 
-        // Force a clean reload to the appropriate dashboard
+        // Redirect to appropriate dashboard
         window.location.href = response.data.role === 'teacher' 
           ? '/teacher-dashboard' 
           : '/student-dashboard';
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login error:', error.response?.data || error);
       setError(error.response?.data?.message || 'Login failed');
       setLoginData(prev => ({ ...prev, password: '' }));
     }
@@ -119,14 +131,17 @@ const UserProfile = () => {
           <div className="mb-8 flex flex-col items-center">
             <img src={p23} width="120" alt="Logo" />
             <h1 className="mb-2 text-2xl font-semibold">
-              {isFirstTimeLogin 
-                ? 'Set Up Your Password' 
-                : 'Student/Teacher Portal'}
+              {isFirstTimeLogin ? 'Set Up Your Password' : 'Student/Teacher Portal'}
             </h1>
+            {isFirstTimeLogin && (
+              <p className="text-sm text-center text-gray-300">
+                This is your first login. Please set up your password.
+              </p>
+            )}
           </div>
           
           {error && (
-            <div className="mb-4 text-red-500 text-center">
+            <div className="mb-4 text-red-500 text-center text-sm">
               {error}
             </div>
           )}
@@ -135,7 +150,7 @@ const UserProfile = () => {
             <form onSubmit={handleFirstLoginSubmit}>
               <div className="mb-4 text-lg">
                 <input
-                  className="rounded-3xl border-none bg-orange-600 bg-opacity-100 px-6 py-2 text-center text-inherit placeholder-slate-200 shadow-lg outline-none backdrop-blur-md"
+                  className="rounded-3xl border-none bg-orange-600 bg-opacity-100 px-6 py-2 text-center text-inherit placeholder-slate-200 shadow-lg outline-none backdrop-blur-md w-full"
                   type="text"
                   value={loginData.username}
                   disabled
@@ -143,7 +158,7 @@ const UserProfile = () => {
               </div>
               <div className="mb-4 text-lg">
                 <input
-                  className="rounded-3xl border-none bg-neon bg-opacity-100 px-6 py-2 text-center text-inherit placeholder-slate-200 shadow-lg outline-none backdrop-blur-md"
+                  className="rounded-3xl border-none bg-neon bg-opacity-100 px-6 py-2 text-center text-inherit placeholder-slate-200 shadow-lg outline-none backdrop-blur-md w-full"
                   type="password"
                   placeholder="Set New Password"
                   value={loginData.password}

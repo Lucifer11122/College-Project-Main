@@ -10,7 +10,7 @@ const router = express.Router();
 router.post('/setup-password', async (req, res) => {
   try {
     const { username, password } = req.body;
-    console.log('Setting up password for:', username); // Debug log
+    console.log('Setting up password for:', username);
 
     const user = await User.findOne({ username });
     if (!user) {
@@ -30,18 +30,25 @@ router.post('/setup-password', async (req, res) => {
     const token = jwt.sign(
       { userId: user._id, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: '2h' }
     );
 
     res.json({
       token,
       role: user.role,
+      user: {
+        _id: user._id,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email
+      },
       message: 'Password setup successful'
     });
 
   } catch (error) {
     console.error('Password setup error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error during password setup' });
   }
 });
 
@@ -49,23 +56,9 @@ router.post('/setup-password', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
-    console.log('Login request received:', { username, hasPassword: !!password });
+    console.log('Login attempt for:', username);
 
-    if (!username || !password) {
-      console.log('Missing credentials');
-      return res.status(400).json({ 
-        message: 'Username and password are required' 
-      });
-    }
-
-    // Find user
     const user = await User.findOne({ username });
-    console.log('User lookup result:', { 
-      found: !!user, 
-      username,
-      hasPassword: !!user?.password,
-      role: user?.role 
-    });
     
     if (!user) {
       return res.status(404).json({ 
@@ -73,8 +66,8 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Check if user is new
-    if (!user.password) {
+    // Check if user is new (no password set)
+    if (!user.password || !user.profileSetup) {
       console.log('First time login detected for:', username);
       return res.status(200).json({ 
         isNewUser: true,
@@ -116,10 +109,7 @@ router.post('/login', async (req, res) => {
 
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ 
-      message: 'Server error during login. Please try again.',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

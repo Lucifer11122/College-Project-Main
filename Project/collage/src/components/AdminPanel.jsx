@@ -59,14 +59,15 @@ const AdminPanel = () => {
         axios.get("http://localhost:5000/api/admin/classes")
       ]);
 
-      setNotifications(notificationsRes.data);
+      if (Array.isArray(notificationsRes.data)) {
+        setNotifications(notificationsRes.data);
+      }
       
       if (grievancesRes.ok && usersRes.ok) {
         setGrievances(await grievancesRes.json());
         setNewUsers(await usersRes.json());
         setTeachers(teachersRes.data);
         setStudents(studentsRes.data);
-        console.log('Classes data:', classesRes.data);
         setClasses(classesRes.data);
       }
     } catch (error) {
@@ -101,13 +102,17 @@ const AdminPanel = () => {
     }
 
     try {
-      await axios.post("http://localhost:5000/notifications", {
+      const response = await axios.post("http://localhost:5000/notifications", {
         notification: newNotification
       });
       
-      // Clear input and refresh notifications
-      setNewNotification("");
-      fetchData();
+      // Update notifications with the response data
+      if (Array.isArray(response.data)) {
+        setNotifications(response.data);
+        setNewNotification("");
+      } else {
+        console.error("Unexpected response format:", response.data);
+      }
     } catch (error) {
       console.error("Error adding notification:", error);
       alert("Failed to add notification.");
@@ -118,8 +123,14 @@ const AdminPanel = () => {
   const handleDeleteNotification = async (index) => {
     if (window.confirm("Are you sure you want to delete this notification?")) {
       try {
-        await axios.delete(`http://localhost:5000/notifications/${index}`);
-        fetchData();
+        const response = await axios.delete(`http://localhost:5000/notifications/${index}`);
+        
+        // Update notifications with the response data
+        if (Array.isArray(response.data)) {
+          setNotifications(response.data);
+        } else {
+          console.error("Unexpected response format:", response.data);
+        }
       } catch (error) {
         console.error("Error deleting notification:", error);
         alert("Failed to delete notification.");

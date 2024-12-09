@@ -246,4 +246,3 @@ const CollegeAdmissionForm = () => {
 };
 
 export default CollegeAdmissionForm;
-
