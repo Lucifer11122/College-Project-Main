@@ -49,6 +49,7 @@ This project is a **College Management WebApp** designed to streamline and enhan
    # Frontend
    cd frontend
    npm install
+   npm i @material-tailwind/react animate.css axios bcryptjs cors dotenv express groq-sdk jsonwebtoken lucide-react mongoose react react-dom react-router-dom recharts tailwind-scrollbar-hide
 
    # Backend
    cd ../backend
