@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import logo from "../assets/logo.png";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleAdminClick = () => {
     const password = prompt("Please enter the admin password:");
@@ -15,18 +16,28 @@ const Header = () => {
     }
   };
 
+  const handleAboutClick = () => {
+    setIsMenuOpen(false);
+    
+    if (location.pathname !== '/') {
+      navigate('/?scroll=about');
+    } else {
+      document.getElementById('about-section')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <header className="relative w-full bg-white shadow-md z-50">
       {/* Top bar for logo and desktop menu */}
       <div className="flex justify-between items-center py-6 px-8 md:px-32 bg-gradient-to-r from-white to bg-orange-100 drop-shadow-md">
         {/* Logo */}
-        <a href="#" className="flex items-center">
+        <Link to="/" className="flex items-center">
           <img
             src={logo}
             alt="Logo"
             className="w-52 hover:scale-105 transition-transform"
           />
-        </a>
+        </Link>
 
         {/* Desktop Menu */}
         <ul className="hidden xl:flex items-center gap-10 font-semibold text-gray-700">
@@ -34,7 +45,7 @@ const Header = () => {
             <button onClick={handleAdminClick}>Admin</button>
           </li>
           <li className="cursor-pointer hover:text-sky-500 transition-colors">
-            About
+            <button onClick={handleAboutClick}>About</button>
           </li>
           <li className="cursor-pointer hover:text-sky-500 transition-colors">
             <Link to="/Administration">Administration</Link>
@@ -47,14 +58,14 @@ const Header = () => {
           </li>
         </ul>
 
-        {/* Hamburger Menu for Mobile */}
+        {/* Mobile Menu */}
         <button
           className="xl:hidden text-3xl focus:outline-none"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-expanded={isMenuOpen}
           aria-label="Toggle menu"
         >
-          <i className={`bx ${isMenuOpen ? "bx-x" : "bx-menu"}`}></i>
+          <i className={`fas fa-${isMenuOpen ? 'times' : 'bars'}`}></i>
         </button>
       </div>
 
@@ -72,30 +83,30 @@ const Header = () => {
         >
           Admin
         </button>
-        <a
-          href="#"
+        <button
+          onClick={handleAboutClick}
           className="block w-full text-center py-2 hover:bg-sky-100 text-gray-700 hover:text-sky-500 transition-colors"
         >
           About
-        </a>
-        <a
-          href="#"
+        </button>
+        <Link
+          to="/Administration"
           className="block w-full text-center py-2 hover:bg-sky-100 text-gray-700 hover:text-sky-500 transition-colors"
         >
           Administration
-        </a>
-        <a
-          href="#"
+        </Link>
+        <Link
+          to="/faculties"
           className="block w-full text-center py-2 hover:bg-sky-100 text-gray-700 hover:text-sky-500 transition-colors"
         >
           Faculties
-        </a>
-        <a
-          href="#"
+        </Link>
+        <Link
+          to="/Alumni"
           className="block w-full text-center py-2 hover:bg-sky-100 text-gray-700 hover:text-sky-500 transition-colors"
         >
           Alumni
-        </a>
+        </Link>
       </div>
     </header>
   );

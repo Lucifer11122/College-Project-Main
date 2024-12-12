@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const Grievance = ({ role }) => {
   const [complaint, setComplaint] = useState("");
@@ -15,28 +16,28 @@ const Grievance = ({ role }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!complaint.trim()) return;
+    
+    if (!complaint.trim()) {
+      alert("Please enter your grievance");
+      return;
+    }
 
     try {
-      const response = await fetch("http://localhost:5000/grievances", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          complaint,
-          username,
-          role
-        }),
+      const response = await axios.post("http://localhost:5000/grievances", {
+        complaint: complaint.trim(),
+        username: username || 'Anonymous',
+        role: role || 'Unknown'
       });
 
-      if (response.ok) {
+      if (response.data.success) {
         setComplaint("");
         setSubmitted(true);
-      } else {
-        alert("Failed to submit grievance");
+        alert("Grievance submitted successfully!");
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Error submitting grievance");
+      const errorMessage = error.response?.data?.message || "Error submitting grievance. Please try again.";
+      alert(errorMessage);
     }
   };
 

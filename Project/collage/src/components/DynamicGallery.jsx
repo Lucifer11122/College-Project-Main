@@ -17,7 +17,7 @@ const DynamicGallery = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row items-stretch justify-between px-8 py-8 bg-gray-100">
+    <div id="about-section" className="flex flex-col md:flex-row items-stretch justify-between px-8 py-8 bg-gray-100">
       {/* Gallery Section */}
       <div className="flex-1 md:w-1/2 h-[400px] flex flex-col items-center justify-center">
         <h2 className="text-2xl font-bold mb-4">Gallery</h2>

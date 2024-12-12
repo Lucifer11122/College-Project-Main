@@ -2,18 +2,29 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 // Main Page Layout
-const MainPageLayout = () => (
-  <>
-    <Header />
-    <NotificationStrip />
-    <CollegeBanner />
-    <ButtonBox />
-    <DynamicGallery />
-    <PrincipalDesk />
-    <ImportantLinks />
-    <Footer />
-  </>
-);
+const MainPageLayout = () => {
+  React.useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get('scroll') === 'about') {
+      setTimeout(() => {
+        document.getElementById('about-section')?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }, []);
+
+  return (
+    <>
+      <Header />
+      <NotificationStrip />
+      <CollegeBanner />
+      <ButtonBox />
+      <DynamicGallery />
+      <PrincipalDesk />
+      <ImportantLinks />
+      <Footer />
+    </>
+  );
+};
 
 // Standalone Page Layout
 const StandalonePage = ({ children }) => (

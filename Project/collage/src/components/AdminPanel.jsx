@@ -139,24 +139,22 @@ const AdminPanel = () => {
   };
 
   // Delete a grievance
-  const handleDeleteGrievance = async (index) => {
+  const handleDeleteGrievance = async (grievanceId) => {
     if (window.confirm("Are you sure you want to delete this grievance?")) {
       try {
-        const response = await fetch(`http://localhost:5000/grievances/${index}`, {
-          method: "DELETE",
+        const response = await fetch(`http://localhost:5000/grievances/${grievanceId}`, {
+          method: "DELETE"
         });
 
         if (response.ok) {
-          const data = await response.json();
-          alert(data.message);
-          fetchData(); // Refresh the grievances list
+          const updatedGrievances = await response.json();
+          setGrievances(updatedGrievances);
         } else {
-          const errorData = await response.json();
-          alert(errorData.message);
+          alert("Failed to delete grievance");
         }
       } catch (error) {
         console.error("Error:", error);
-        alert("Failed to delete grievance.");
+        alert("Failed to delete grievance");
       }
     }
   };

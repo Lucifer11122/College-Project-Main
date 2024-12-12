@@ -23,11 +23,10 @@ const ButtonBox = () => {
       {/* Button 2 */}
       <div className="relative group">
         <button 
-        className="bg-orange-400 text-white flex items-center justify-center w-14 h-14 rounded-full shadow-md hover:bg-orange-500 transition duration-300"
-        onClick={() => {
-          navigate("/Undergrade");
-        }}
-
+          className="bg-orange-400 text-white flex items-center justify-center w-14 h-14 rounded-full shadow-md hover:bg-orange-500 transition duration-300"
+          onClick={() => {
+            navigate("/Undergrade");
+          }}
         >
           <i className="fas fa-book-open text-lg"></i>
         </button>
@@ -38,12 +37,13 @@ const ButtonBox = () => {
 
       {/* Button 3 */}
       <div className="relative group">
-        <button className="bg-orange-400 text-white flex items-center justify-center w-14 h-14 rounded-full shadow-md hover:bg-orange-500 transition duration-300"
+        <button 
+          className="bg-orange-400 text-white flex items-center justify-center w-14 h-14 rounded-full shadow-md hover:bg-orange-500 transition duration-300"
           onClick={() => {
             navigate("/graduation");
           }}
         >
-          <i className="bx bxs-graduation text-lg"></i>
+          <i className="fas fa-graduation-cap text-lg"></i>
         </button>
         <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 text-sm text-black rounded opacity-0 group-hover:opacity-100 transition-opacity">
           Graduation
@@ -52,12 +52,13 @@ const ButtonBox = () => {
 
       {/* Button 4 */}
       <div className="relative group">
-        <button className="bg-orange-400 text-white flex items-center justify-center w-14 h-14 rounded-full shadow-md hover:bg-orange-500 transition duration-300"
+        <button 
+          className="bg-orange-400 text-white flex items-center justify-center w-14 h-14 rounded-full shadow-md hover:bg-orange-500 transition duration-300"
           onClick={() => {
             navigate("/contact");
           }}
         >
-          <i className="bx bxs-phone-call text-lg"></i>
+          <i className="fas fa-phone text-lg"></i>
         </button>
         <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 text-sm text-black rounded opacity-0 group-hover:opacity-100 transition-opacity">
           Contact
@@ -66,12 +67,13 @@ const ButtonBox = () => {
 
       {/* Button 5 */}
       <div className="relative group">
-        <button className="bg-orange-400 text-white flex items-center justify-center w-14 h-14 rounded-full shadow-md hover:bg-orange-500 transition duration-300"
+        <button 
+          className="bg-orange-400 text-white flex items-center justify-center w-14 h-14 rounded-full shadow-md hover:bg-orange-500 transition duration-300"
           onClick={() => {
             navigate("/chat");
           }}
         >
-          <i className="bx bxs-chat text-lg"></i>
+          <i className="fas fa-comments text-lg"></i>
         </button>
         <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 text-sm text-black rounded opacity-0 group-hover:opacity-100 transition-opacity">
           Chat

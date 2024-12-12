@@ -14,6 +14,7 @@ import Notice from './models/Notice.js';
 import Course from './models/Course.js';
 import compression from 'compression';
 import Notification from './models/Notification.js';
+import Grievance from './models/Grievance.js';
 
 dotenv.config();
 const app = express();
@@ -120,30 +121,62 @@ app.delete("/notifications/:index", async (req, res) => {
   }
 });
 
-// Get all grievances (for admin to view)
-app.get("/grievances", (req, res) => {
-  res.json(grievances);
-});
-
-// Add a new grievance (for users)
-app.post("/grievances", (req, res) => {
-  const { complaint, username, role } = req.body;
-  if (complaint && typeof complaint === "string" && complaint.trim() !== "") {
-    grievances.push({ complaint, username, role, date: new Date() });
-    res.status(201).json({ message: "Grievance submitted successfully!" });
-  } else {
-    res.status(400).json({ message: "Invalid grievance format!" });
+// Get all grievances
+app.get("/grievances", async (req, res) => {
+  try {
+    const grievances = await Grievance.find().sort({ date: -1 });
+    res.json(grievances);
+  } catch (error) {
+    console.error('Error fetching grievances:', error);
+    res.status(500).json({ message: "Error fetching grievances" });
   }
 });
 
-// Delete a grievance by index (for admin)
-app.delete("/grievances/:index", (req, res) => {
-  const { index } = req.params;
-  if (index >= 0 && index < grievances.length) {
-    grievances.splice(index, 1); 
-    res.json({ message: "Grievance deleted successfully!" });
-  } else {
-    res.status(400).json({ message: "Invalid grievance index!" });
+// Add a new grievance
+app.post("/grievances", async (req, res) => {
+  try {
+    const { complaint, username, role } = req.body;
+    
+    if (!complaint || !complaint.trim()) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Complaint text is required" 
+      });
+    }
+
+    const newGrievance = new Grievance({
+      complaint: complaint.trim(),
+      username: username || 'Anonymous',
+      role: role || 'Unknown',
+      date: new Date()
+    });
+
+    const savedGrievance = await newGrievance.save();
+    
+    res.status(201).json({ 
+      success: true,
+      message: "Grievance submitted successfully!",
+      grievance: savedGrievance 
+    });
+  } catch (error) {
+    console.error('Error adding grievance:', error);
+    res.status(500).json({ 
+      success: false,
+      message: "Error submitting grievance",
+      error: error.message 
+    });
+  }
+});
+
+// Delete a grievance
+app.delete("/grievances/:id", async (req, res) => {
+  try {
+    await Grievance.findByIdAndDelete(req.params.id);
+    const grievances = await Grievance.find().sort({ date: -1 });
+    res.json(grievances);
+  } catch (error) {
+    console.error('Error deleting grievance:', error);
+    res.status(500).json({ message: "Error deleting grievance" });
   }
 });
 
