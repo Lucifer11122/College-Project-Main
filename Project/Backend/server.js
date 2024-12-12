@@ -38,13 +38,25 @@ app.use(compression());
 
 // Update the cache middleware
 app.use((req, res, next) => {
-  // No caching for authentication routes
-  if (req.path.includes('/api/auth/') || req.path.includes('/api/admin/')) {
+  // List of routes that should never be cached
+  const noCacheRoutes = [
+    '/api/auth/',
+    '/api/admin/',
+    '/grievances',
+    '/notifications',
+    '/api/queries',
+    '/api/notices'
+  ];
+
+  // Check if the current route should not be cached
+  const shouldNotCache = noCacheRoutes.some(route => req.path.includes(route));
+
+  if (shouldNotCache) {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
   } else {
-    // Limited caching for other routes
+    // Limited caching for static content only
     res.set('Cache-Control', 'private, max-age=300'); // 5 minutes
   }
   next();
@@ -171,12 +183,45 @@ app.post("/grievances", async (req, res) => {
 // Delete a grievance
 app.delete("/grievances/:id", async (req, res) => {
   try {
-    await Grievance.findByIdAndDelete(req.params.id);
-    const grievances = await Grievance.find().sort({ date: -1 });
-    res.json(grievances);
+    const { id } = req.params;
+    
+    // Validate MongoDB ObjectId
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Invalid grievance ID format" 
+      });
+    }
+
+    console.log('Attempting to delete grievance:', id);
+
+    const deletedGrievance = await Grievance.findByIdAndDelete(id);
+    
+    if (!deletedGrievance) {
+      console.log('Grievance not found:', id);
+      return res.status(404).json({ 
+        success: false,
+        message: "Grievance not found" 
+      });
+    }
+
+    console.log('Grievance deleted successfully:', deletedGrievance);
+    
+    // Fetch updated grievances
+    const updatedGrievances = await Grievance.find().sort({ date: -1 });
+    
+    res.json({ 
+      success: true,
+      message: "Grievance deleted successfully",
+      grievances: updatedGrievances
+    });
   } catch (error) {
     console.error('Error deleting grievance:', error);
-    res.status(500).json({ message: "Error deleting grievance" });
+    res.status(500).json({ 
+      success: false,
+      message: "Error deleting grievance",
+      error: error.message 
+    });
   }
 });
 
@@ -189,9 +234,22 @@ app.use('/api', dashboardRoutes);
 // Get all queries
 app.get("/api/queries", async (req, res) => {
   try {
-    const queries = await Query.find().sort({ date: -1 });
+    const { teacherId, studentName } = req.query;
+    const query = {};
+    
+    if (teacherId) {
+      query.teacherId = teacherId;
+    }
+    
+    if (studentName) {
+      query.studentName = studentName;
+    }
+
+    console.log('Fetching queries with filter:', query);
+    const queries = await Query.find(query).sort({ date: -1 });
     res.json(queries);
   } catch (error) {
+    console.error('Error fetching queries:', error);
     res.status(500).json({ message: "Error fetching queries" });
   }
 });
@@ -199,12 +257,37 @@ app.get("/api/queries", async (req, res) => {
 // Submit a new query
 app.post("/api/queries", async (req, res) => {
   try {
-    const { studentName, question } = req.body;
-    const newQuery = new Query({ studentName, question });
+    const { studentName, question, teacherId, teacherName } = req.body;
+    
+    if (!teacherId) {
+      return res.status(400).json({ message: "Teacher selection is required" });
+    }
+
+    if (!question || !question.trim()) {
+      return res.status(400).json({ message: "Question is required" });
+    }
+
+    const newQuery = new Query({ 
+      studentName, 
+      question: question.trim(),
+      teacherId,
+      teacherName,
+      date: new Date()
+    });
+    
     await newQuery.save();
-    res.status(201).json({ message: "Query submitted successfully" });
+    res.status(201).json({ 
+      success: true,
+      message: "Query submitted successfully",
+      query: newQuery
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error submitting query" });
+    console.error('Error submitting query:', error);
+    res.status(500).json({ 
+      success: false,
+      message: "Error submitting query",
+      error: error.message 
+    });
   }
 });
 
@@ -212,12 +295,28 @@ app.post("/api/queries", async (req, res) => {
 app.post("/api/queries/:queryId/answer", async (req, res) => {
   try {
     const { answer } = req.body;
-    await Query.findByIdAndUpdate(req.params.queryId, {
-      answer,
-      isAnswered: true
-    });
-    res.json({ message: "Answer submitted successfully" });
+    const { queryId } = req.params;
+
+    if (!answer || !answer.trim()) {
+      return res.status(400).json({ message: "Answer is required" });
+    }
+
+    const updatedQuery = await Query.findByIdAndUpdate(
+      queryId,
+      {
+        answer: answer.trim(),
+        isAnswered: true
+      },
+      { new: true }
+    );
+
+    if (!updatedQuery) {
+      return res.status(404).json({ message: "Query not found" });
+    }
+
+    res.json(updatedQuery);
   } catch (error) {
+    console.error('Error submitting answer:', error);
     res.status(500).json({ message: "Error submitting answer" });
   }
 });

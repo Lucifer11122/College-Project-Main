@@ -5,33 +5,67 @@ const StudentsQueries = ({ studentName }) => {
   const [queries, setQueries] = useState([]);
   const [question, setQuestion] = useState('');
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [teachers, setTeachers] = useState([]);
+  const [selectedTeacher, setSelectedTeacher] = useState('');
+  const [selectedTeacherName, setSelectedTeacherName] = useState('');
 
   useEffect(() => {
-    fetchQueries();
+    fetchTeachers();
   }, []);
 
-  const fetchQueries = async () => {
+  useEffect(() => {
+    if (selectedTeacher) {
+      fetchQueriesForTeacher();
+    }
+  }, [selectedTeacher]);
+
+  const fetchTeachers = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/queries');
+      const response = await axios.get('http://localhost:5000/api/admin/teachers');
+      setTeachers(response.data);
+    } catch (error) {
+      console.error('Error fetching teachers:', error);
+    }
+  };
+
+  const fetchQueriesForTeacher = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/queries?teacherId=${selectedTeacher}&studentName=${encodeURIComponent(studentName)}`);
       setQueries(response.data);
     } catch (error) {
       console.error('Error fetching queries:', error);
     }
   };
 
+  const handleTeacherChange = (e) => {
+    const teacherId = e.target.value;
+    setSelectedTeacher(teacherId);
+    const teacher = teachers.find(t => t._id === teacherId);
+    setSelectedTeacherName(teacher ? `${teacher.firstName} ${teacher.lastName}` : '');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!selectedTeacher) {
+      alert('Please select a teacher');
+      return;
+    }
+
     try {
       await axios.post('http://localhost:5000/api/queries', {
         studentName,
-        question
+        question: question.trim(),
+        teacherId: selectedTeacher,
+        teacherName: selectedTeacherName
       });
+      
       setQuestion('');
       setShowConfirmation(true);
       setTimeout(() => setShowConfirmation(false), 3000);
-      fetchQueries();
+      fetchQueriesForTeacher();
     } catch (error) {
       console.error('Error submitting query:', error);
+      alert(error.response?.data?.message || 'Error submitting query');
     }
   };
 
@@ -47,6 +81,19 @@ const StudentsQueries = ({ studentName }) => {
 
       <form onSubmit={handleSubmit} className="mb-6">
         <div className="mb-4">
+          <select
+            value={selectedTeacher}
+            onChange={handleTeacherChange}
+            className="w-full p-2 border rounded mb-4"
+            required
+          >
+            <option value="">Select a Teacher</option>
+            {teachers.map((teacher) => (
+              <option key={teacher._id} value={teacher._id}>
+                {teacher.firstName} {teacher.lastName}
+              </option>
+            ))}
+          </select>
           <textarea
             placeholder="Type your question here..."
             value={question}
@@ -66,20 +113,29 @@ const StudentsQueries = ({ studentName }) => {
 
       <div className="space-y-4">
         <h3 className="font-semibold">Your Questions & Answers</h3>
-        {queries.filter(query => query.studentName === studentName).map((query, index) => (
-          <div key={index} className="p-4 bg-gray-50 rounded">
-            <p className="text-gray-600 mb-2">{query.question}</p>
-            {query.answer && (
-              <div className="mt-2 p-2 bg-green-50 rounded">
-                <p className="font-medium text-green-800">Teacher's Response:</p>
-                <p className="text-gray-600">{query.answer}</p>
+        {selectedTeacher ? (
+          queries.length === 0 ? (
+            <p className="text-gray-500">No questions yet for this teacher.</p>
+          ) : (
+            queries.map((query) => (
+              <div key={query._id} className="p-4 bg-gray-50 rounded">
+                <p className="text-gray-600 mb-2">{query.question}</p>
+                <p className="text-sm text-gray-500">To: {query.teacherName}</p>
+                {query.answer && (
+                  <div className="mt-2 p-2 bg-green-50 rounded">
+                    <p className="font-medium text-green-800">Teacher's Response:</p>
+                    <p className="text-gray-600">{query.answer}</p>
+                  </div>
+                )}
+                <p className="text-sm text-gray-500 mt-2">
+                  {new Date(query.date).toLocaleString()}
+                </p>
               </div>
-            )}
-            <p className="text-sm text-gray-500 mt-2">
-              {new Date(query.date).toLocaleString()}
-            </p>
-          </div>
-        ))}
+            ))
+          )
+        ) : (
+          <p className="text-gray-500">Please select a teacher to view your questions.</p>
+        )}
       </div>
     </div>
   );

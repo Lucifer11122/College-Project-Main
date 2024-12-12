@@ -140,21 +140,26 @@ const AdminPanel = () => {
 
   // Delete a grievance
   const handleDeleteGrievance = async (grievanceId) => {
+    if (!grievanceId || typeof grievanceId !== 'string') {
+      console.error('Invalid grievance ID:', grievanceId);
+      alert('Invalid grievance ID');
+      return;
+    }
+
     if (window.confirm("Are you sure you want to delete this grievance?")) {
       try {
-        const response = await fetch(`http://localhost:5000/grievances/${grievanceId}`, {
-          method: "DELETE"
-        });
+        console.log('Deleting grievance with ID:', grievanceId);
+        const response = await axios.delete(`http://localhost:5000/grievances/${grievanceId}`);
 
-        if (response.ok) {
-          const updatedGrievances = await response.json();
-          setGrievances(updatedGrievances);
+        if (response.data.success) {
+          setGrievances(response.data.grievances);
+          alert("Grievance deleted successfully");
         } else {
-          alert("Failed to delete grievance");
+          alert(response.data.message || "Failed to delete grievance");
         }
       } catch (error) {
-        console.error("Error:", error);
-        alert("Failed to delete grievance");
+        console.error("Error deleting grievance:", error);
+        alert(error.response?.data?.message || "Failed to delete grievance");
       }
     }
   };
@@ -441,13 +446,13 @@ const AdminPanel = () => {
             <div className="bg-white rounded-lg p-6 shadow-md border border-gray-100">
               <h2 className="text-2xl font-semibold mb-4 text-gray-800">Grievances</h2>
               <div className="space-y-4">
-                {grievances.map((grievance, index) => (
-                  <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                {grievances.map((grievance) => (
+                  <div key={grievance._id} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                     <div className="flex justify-between items-start">
                       <div>
                         <div className="flex items-center gap-2">
                           <p className="font-semibold text-gray-900">
-                            {grievance.firstName} {grievance.lastName}
+                            {grievance.username}
                           </p>
                           <span className={`text-xs px-2 py-1 rounded-full ${
                             grievance.role === 'teacher' ? 'bg-purple-100 text-purple-800' : 
@@ -456,14 +461,13 @@ const AdminPanel = () => {
                             {grievance.role}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500">@{grievance.username}</p>
                         <p className="text-sm text-gray-600 mt-2">{grievance.complaint}</p>
                         <p className="text-xs text-gray-500 mt-2">
                           {new Date(grievance.date).toLocaleDateString()}
                         </p>
                       </div>
                       <button
-                        onClick={() => handleDeleteGrievance(index)}
+                        onClick={() => handleDeleteGrievance(grievance._id)}
                         className="text-red-500 hover:text-red-600 hover:bg-red-50 p-2 rounded-full transition-all duration-300"
                       >
                         <i className="fas fa-trash"></i>

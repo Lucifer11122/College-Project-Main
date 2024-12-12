@@ -5,61 +5,131 @@ const TeacherQueries = () => {
   const [queries, setQueries] = useState([]);
   const [answers, setAnswers] = useState({});
   const [notices, setNotices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchQueries();
-    fetchNotices();
-    const interval = setInterval(fetchQueries, 30000);
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  const fetchQueries = async () => {
+  const fetchData = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/queries');
-      setQueries(response.data);
-    } catch (error) {
-      console.error('Error fetching queries:', error);
-    }
-  };
+      setLoading(true);
+      setError(null);
+      
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Authentication token not found');
+        return;
+      }
 
-  const fetchNotices = async () => {
-    try {
-      const response = await axios.get('http://localhost:5000/api/notices/teacher');
-      setNotices(response.data);
+      // Get user data from token
+      const tokenData = JSON.parse(atob(token.split('.')[1]));
+      const teacherId = tokenData.userId;
+
+      if (!teacherId) {
+        setError('Teacher ID not found in token');
+        return;
+      }
+
+      console.log('Fetching data for teacher:', teacherId);
+
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      };
+
+      const [queriesRes, noticesRes] = await Promise.all([
+        axios.get(`http://localhost:5000/api/queries?teacherId=${teacherId}`, { headers }),
+        axios.get('http://localhost:5000/api/notices/teacher', { headers })
+      ]);
+
+      console.log('Queries response:', queriesRes.data);
+      console.log('Notices response:', noticesRes.data);
+
+      setQueries(queriesRes.data);
+      setNotices(noticesRes.data);
     } catch (error) {
-      console.error('Error fetching notices:', error);
+      console.error('Error fetching data:', error);
+      setError(error.response?.data?.message || 'Error fetching data');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleAnswer = async (queryId) => {
     try {
-      await axios.post(`http://localhost:5000/api/queries/${queryId}/answer`, {
-        answer: answers[queryId]
-      });
-      setAnswers(prev => ({ ...prev, [queryId]: '' }));
-      fetchQueries();
+      const answer = answers[queryId];
+      if (!answer || !answer.trim()) {
+        alert('Please write an answer before submitting');
+        return;
+      }
+
+      const token = localStorage.getItem('token');
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      };
+
+      const response = await axios.post(
+        `http://localhost:5000/api/queries/${queryId}/answer`,
+        { answer: answer.trim() },
+        { headers }
+      );
+
+      if (response.data) {
+        setAnswers(prev => ({ ...prev, [queryId]: '' }));
+        fetchData();
+      }
     } catch (error) {
       console.error('Error submitting answer:', error);
+      alert(error.response?.data?.message || 'Error submitting answer. Please try again.');
     }
   };
 
-  return (
-    <div className="bg-white p-6 rounded-lg shadow">
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-4">Important Notices</h2>
-        <div className="space-y-4">
-          {notices.map((notice) => (
-            <div key={notice._id} className="p-4 bg-orange-50 rounded border-l-4 border-orange-500">
-              <h3 className="font-semibold text-lg">{notice.title}</h3>
-              <p className="text-gray-600 mt-1">{notice.message}</p>
-              <p className="text-sm text-gray-500 mt-2">
-                {new Date(notice.createdAt).toLocaleDateString()}
-              </p>
-            </div>
-          ))}
+  if (loading) {
+    return (
+      <div className="bg-white bg-opacity-30 backdrop-blur-md border border-white border-opacity-20 p-6 rounded-3xl shadow-md">
+        <div className="flex justify-center items-center h-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500"></div>
         </div>
       </div>
-      <h2 className="text-xl font-semibold mb-4">Student Questions</h2>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white bg-opacity-30 backdrop-blur-md border border-white border-opacity-20 p-6 rounded-3xl shadow-md">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white bg-opacity-30 backdrop-blur-md border border-white border-opacity-20 p-6 rounded-3xl shadow-md">
+      <div className="mb-6">
+        <h2 className="text-2xl font-Roboto text-blue-600 mb-4">Important Notices</h2>
+        <div className="space-y-4">
+          {notices.length === 0 ? (
+            <p className="text-gray-500">No notices available.</p>
+          ) : (
+            notices.map((notice) => (
+              <div key={notice._id} className="p-4 bg-orange-50 rounded border-l-4 border-orange-500">
+                <h3 className="font-semibold text-lg">{notice.title}</h3>
+                <p className="text-gray-600 mt-1">{notice.message}</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  {new Date(notice.createdAt).toLocaleDateString()}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+      <h2 className="text-2xl font-Roboto text-blue-600 mb-4">Student Questions</h2>
       <div className="space-y-4">
         {queries.length === 0 ? (
           <p className="text-gray-500">No questions from students yet.</p>
