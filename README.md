@@ -52,8 +52,8 @@ This project is a **College Management WebApp** designed to streamline and enhan
    npm i @material-tailwind/react animate.css axios bcryptjs cors dotenv express groq-sdk jsonwebtoken lucide-react mongoose react react-dom react-router-dom recharts tailwind-scrollbar-hide
 
    # Backend
-   cd ../backend
-   npm install
+   cd backend
+   npm i axios bcryptjs compression cors dotenv express jsonwebtoken mongoose
    ```
 
 3. **Set up environment variables**: Create a `.env` file in the `backend` folder with the following details:
@@ -70,10 +70,10 @@ This project is a **College Management WebApp** designed to streamline and enhan
    # Frontend
    cd frontend
    npm run dev
-
+Open a new terminal
    # Backend
-   cd ../backend
-   npm run start
+   cd backend
+   node server.js
    ```
 
 5. **Access the application**: Open your browser and navigate to `http://localhost:3000` for the frontend.
